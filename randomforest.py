@@ -3,15 +3,36 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 
-from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+
+
+import seaborn as sns
 from sklearn.model_selection import train_test_split
+from sklearn import metrics
+from sklearn.model_selection import GridSearchCV
+
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-# Load the dataset
+# load the dataset from excel using pandas
 data = pd.read_csv(r"C:\Users\HP ProBook 440 G7\Desktop\myFinalProjec\Updated FUTO Cybersecurity Awareness Survey.csv")
+# print(data.head())
 
-# Mapping categorical responses to numerical scores
+# check for missing values / cleaning the dataSet
+missing_values = data.isnull()  # This method returns  True where data is missing and False where data is present.
+print(missing_values)
+missing_values_per_column = data.isnull().sum()  # This returns the number of missing values per column
+print(missing_values_per_column)
+print(data.dtypes)  # Use the dtypes attribute to check the data types of each column.
+data.info()  # Use this method to get a more detailed summary including data types and non-null counts for each column
+# No missing value found
+
+# mapping each response to numeric score To get the awareness Total
+
 mapping_CybersecurityFamiliarity = {
     'Very familiar': 5,
     'Somewhat familiar': 3,
@@ -19,6 +40,7 @@ mapping_CybersecurityFamiliarity = {
 }
 data['CybersecurityFamiliarity'] = data['CybersecurityFamiliarity'].map(mapping_CybersecurityFamiliarity)
 
+# mapping for understanding of phishing
 mapping_phishing = {
     'I have never heard of it': 0,
     "I have heard of it but don't know what it is": 5,
@@ -26,6 +48,8 @@ mapping_phishing = {
     'I know what it is but find it hard to identify phishing': 15
 }
 data['PhishingUnderstanding'] = data['PhishingUnderstanding'].map(mapping_phishing)
+
+# mapping for FirewallKnowledge
 
 mapping_FirewallKnowledge = {
     'Yes, I know in detail': 10,
@@ -35,6 +59,7 @@ mapping_FirewallKnowledge = {
 }
 data['FirewallKnowledge'] = data['FirewallKnowledge'].map(mapping_FirewallKnowledge)
 
+# mapping for PasswordUpdateFrequency
 mapping_PasswordUpdateFrequency = {
     'Monthly': 10,
     'Every few months': 7,
@@ -43,6 +68,7 @@ mapping_PasswordUpdateFrequency = {
 }
 data['PasswordUpdateFrequency'] = data['PasswordUpdateFrequency'].map(mapping_PasswordUpdateFrequency)
 
+# mapping  SamePasswordUsage
 mapping_SamePasswordUsage = {
     'Yes, for most accounts': 10,
     'Yes, but only for a few accounts': 5,
@@ -50,6 +76,7 @@ mapping_SamePasswordUsage = {
 }
 data['SamePasswordUsage'] = data['SamePasswordUsage'].map(mapping_SamePasswordUsage)
 
+# mapping TwoFactorAuthUsage
 mapping_TwoFactorAuthUsage = {
     'Yes, for all accounts': 10,
     'Yes, but only for some accounts': 5,
@@ -57,6 +84,7 @@ mapping_TwoFactorAuthUsage = {
 }
 data['TwoFactorAuthUsage'] = data['TwoFactorAuthUsage'].map(mapping_TwoFactorAuthUsage)
 
+# mapping  UnknownEmailResponse
 mapping_UnknownEmailResponse = {
     'Open the attachment to see what it is': 0,
     'Delete the email immediately': 5,
@@ -65,9 +93,14 @@ mapping_UnknownEmailResponse = {
 }
 data['UnknownEmailResponse'] = data['UnknownEmailResponse'].map(mapping_UnknownEmailResponse)
 
-mapping_CyberIncidentExperience = {'Yes': 0, 'No': 1}
+# CyberIncidentExperience
+mapping_CyberIncidentExperience = {
+    'Yes': 0,
+    'No': 1
+}
 data['CyberIncidentExperience'] = data['CyberIncidentExperience'].map(mapping_CyberIncidentExperience)
 
+# IncidentResponse
 mapping_IncidentResponse = {
     'Changed passwords': 1,
     'Reported it to the relevant  authorities': 2,
@@ -76,6 +109,7 @@ mapping_IncidentResponse = {
 }
 data['IncidentResponse'] = data['IncidentResponse'].map(mapping_IncidentResponse)
 
+# mapping PhishingEmailResponse
 mapping_PhishingEmailResponse = {
     'Clink the link and update your information': 0,
     'Ignore the email': 5,
@@ -84,6 +118,7 @@ mapping_PhishingEmailResponse = {
 }
 data['PhishingEmailResponse'] = data['PhishingEmailResponse'].map(mapping_PhishingEmailResponse)
 
+# mapping PopUpAlertAction
 mapping_PopUpAlertAction = {
     'Run your antivirus software to check for issues': 10,
     'Close the pop-up and continue browsing': 7,
@@ -92,6 +127,7 @@ mapping_PopUpAlertAction = {
 }
 data['PopUpAlertAction'] = data['PopUpAlertAction'].map(mapping_PopUpAlertAction)
 
+# mapping CybersecurityImportance
 mapping_CybersecurityImportance = {
     'Extremely important': 5,
     'Very important': 3,
@@ -100,6 +136,7 @@ mapping_CybersecurityImportance = {
 }
 data['CybersecurityImportance'] = data['CybersecurityImportance'].map(mapping_CybersecurityImportance)
 
+# mapping for DataProtectionConfidence
 mapping_DataProtectionConfidence = {
     'Very confident': 5,
     'Somewhat confident': 3,
@@ -108,10 +145,16 @@ mapping_DataProtectionConfidence = {
 }
 data['DataProtectionConfidence'] = data['DataProtectionConfidence'].map(mapping_DataProtectionConfidence)
 
-mapping_CyberTrainingInterest = {'Yes': 5, 'Maybe': 3, 'No': 0}
+# mapping CyberTrainingInterest
+mapping_CyberTrainingInterest = {
+    'Yes': 5,
+    'Maybe': 3,
+    'No': 0
+}
 data['CyberTrainingInterest'] = data['CyberTrainingInterest'].map(mapping_CyberTrainingInterest)
 
-# Compute TotalScore
+# Trying to Sum up the mapping score for each student
+
 data['TotalScore'] = data[['CybersecurityFamiliarity', 'PhishingUnderstanding', 'FirewallKnowledge',
                            'SamePasswordUsage', 'TwoFactorAuthUsage', 'UnknownEmailResponse',
                            'CyberIncidentExperience', 'IncidentResponse', 'PhishingEmailResponse',
@@ -121,107 +164,76 @@ data['TotalScore'] = data[['CybersecurityFamiliarity', 'PhishingUnderstanding', 
 # Maximum possible score
 max_score = 109
 
-# Calculate CyberAwarenessPercentage
+# Calculate the CyberAwarenessPercentage
 data['CyberAwarenessPercentage'] = (data['TotalScore'] / max_score) * 100
 
-# Create AwarenessLevel category
+# Print TotalScore and CyberAwarenessPercentage
+print(data[['TotalScore', 'CyberAwarenessPercentage']])
+
+# Creating the target variable based on the awareness percentage
 bins = [0, 40, 70, 100]
-labels = ['Low Awareness', 'Medium Awareness', 'High Awareness']
+labels = ['Low Awareness',  'Medium Awareness', 'High Awareness']
 data['AwarenessLevel'] = pd.cut(data['CyberAwarenessPercentage'], bins=bins, labels=labels)
+print(data['AwarenessLevel'])
 
-# Convert AwarenessLevel to numerical values
-data['AwarenessLevel'] = data['AwarenessLevel'].map({
-    'Low Awareness': 0,
-    'Medium Awareness': 1,
-    'High Awareness': 2
-})
-
-#Drop rows with any nan values
-data = data.dropna()
-
-# Define features (X) and target variable (Y)
+# this step we label  the data into feature X and Target Y
 X = data.drop(['TotalScore', 'CyberAwarenessPercentage', 'AwarenessLevel'], axis=1)
 Y = data['AwarenessLevel']
 
-# Split dataset into training and testing sets (80% training, 20% testing)
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+# This step we split the data into both the Training (80%) and Testing (20%)
+X_train,  X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-# Standardize features for SVM
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+# This step we choose the model that is suitable for project based on the dataset we're working on
+# We choose Random Forest Classifier model
+# rf stand for random forest
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 
-# Train SVM model
-svm_model = SVC(kernel='linear')  # Change 'linear' to 'rbf' or 'poly' if needed
-svm_model.fit(X_train, Y_train)
+# This step we train the model with the train data X_train/Y_train
+rf_model.fit(X_train,Y_train)
+
+# This step we test the performance of the model using X_test
+Y_predict = rf_model.predict(X_test)
+
+# we evaluate the model
+
+accuracy = accuracy_score(Y_test, Y_predict)
+print(f"Accuracy: {accuracy * 100:.2f}%")
+print("Classification Report:")
+print(classification_report(Y_test, Y_predict))
+
+# CONFUSION MATRIX
+print("Confusion matrix:")
+print(confusion_matrix(Y_test, Y_predict))
+
+# TURN MODEL Hyperparameter
+
+# Define the parameter grid
+param_grid = {
+    'n_estimators': [100, 200, 300],
+    'max_depth': [None, 10, 20, 30],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+# Perform grid search
+grid_search = GridSearchCV(estimator=rf_model, param_grid=param_grid, cv=3, n_jobs=-1, verbose=2)
+grid_search.fit(X_train, Y_train)
+
+# Best parameters
+print("Best parameters found: ", grid_search.best_params_)
+
+# Train the best model
+best_model = grid_search.best_estimator_
 
 # Make predictions
-Y_pred_svm = svm_model.predict(X_test)
+y_pred_best = best_model.predict(X_test)
 
-# Evaluate model performance
-accuracy = accuracy_score(Y_test, Y_pred_svm)
-print(f"SVM Accuracy: {accuracy * 100:.2f}%")
-print("Classification Report:")
-print(classification_report(Y_test, Y_pred_svm))
+# Evaluate the tuned model
+print("Tuned Model Accuracy:", accuracy_score(Y_test, y_pred_best))
+print("Tuned Model Classification Report:\n", classification_report(Y_test, y_pred_best))
+print(data[['TotalScore', 'CyberAwarenessPercentage', 'AwarenessLevel']])
 
-# Confusion matrix
-print("Confusion Matrix:")
-print(confusion_matrix(Y_test, Y_pred_svm))
+# Save the model to a file call cyber_awareness_model.pkl
+#joblib.dump(rf_model, 'cyber_awareness_model.pkl')
+joblib.dump(rf_model, 'ml_model.pkl')
 
-# Save the trained SVM model
-joblib.dump(svm_model, 'cyber_awareness_svm_model.pkl')
-
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import precision_recall_fscore_support
-
-# Calculate precision, recall, and F1-score for each awareness level
-precision, recall, f1_score, _ = precision_recall_fscore_support(Y_test, Y_pred_svm, labels=svm_model.classes_)
-
-# Awareness level labels
-awareness_levels = ['Low Awareness', 'Medium Awareness', 'High Awareness']
-
-# Create a bar plot
-x = np.arange(len(awareness_levels))
-width = 0.25
-
-plt.figure(figsize=(10, 6))
-
-# Plot precision, recall, and F1-score
-plt.bar(x - width, precision, width, label='Precision', color='skyblue')
-plt.bar(x, recall, width, label='Recall', color='lightgreen')
-plt.bar(x + width, f1_score, width, label='F1-Score', color='coral')
-
-# Add labels, title, and legend
-plt.xlabel('Cybersecurity Awareness Levels')
-plt.ylabel('Score')
-plt.title('SVM Metrics by Cybersecurity Awareness Level')
-plt.xticks(x, awareness_levels)
-plt.legend()
-
-# Display the plot
-plt.tight_layout()
-plt.show()
-
-
-#Confusion matric
-import seaborn as sns
-from sklearn.metrics import confusion_matrix
-
-# Calculate the confusion matrix
-conf_matrix = confusion_matrix(Y_test, Y_pred_svm)
-
-# Plot the confusion matrix as a heatmap
-plt.figure(figsize=(8, 6))
-sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
-            xticklabels=awareness_levels, yticklabels=awareness_levels)
-
-# Add labels, title, and axis ticks
-plt.xlabel('Predicted Labels')
-plt.ylabel('True Labels')
-plt.title('Confusion Matrix for Support Vector Machine')
-
-# Display the plot
-plt.show()

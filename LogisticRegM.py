@@ -153,3 +153,26 @@ plt.legend()
 # Display the plot
 plt.tight_layout()
 plt.show()
+
+
+#confusion matrix
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+
+# Calculate the confusion matrix
+conf_matrix = confusion_matrix(Y_test, Y_pred)
+
+# Plot the confusion matrix as a heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
+            xticklabels=labels, yticklabels=labels)
+
+# Add labels, title, and axis ticks
+plt.xlabel('Predicted Labels')
+plt.ylabel('True Labels')
+plt.title('Confusion Matrix for Logistic Regression ')
+
+# Display the plot
+plt.show()

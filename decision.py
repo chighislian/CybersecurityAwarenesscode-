@@ -184,57 +184,6 @@ X_train,  X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random
 
 # This step we choose the model that is suitable for project based on the dataset we're working on
 # We choose Random Forest Classifier model
-# rf stand for random forest
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-
-# This step we train the model with the train data X_train/Y_train
-rf_model.fit(X_train,Y_train)
-
-# This step we test the performance of the model using X_test
-Y_predict = rf_model.predict(X_test)
-
-# we evaluate the model
-
-accuracy = accuracy_score(Y_test, Y_predict)
-print(f"Accuracy: {accuracy * 100:.2f}%")
-print("Classification Report:")
-print(classification_report(Y_test, Y_predict))
-
-# CONFUSION MATRIX
-print("Confusion matrix:")
-print(confusion_matrix(Y_test, Y_predict))
-
-# TURN MODEL Hyperparameter
-
-# Define the parameter grid
-param_grid = {
-    'n_estimators': [100, 200, 300],
-    'max_depth': [None, 10, 20, 30],
-    'min_samples_split': [2, 5, 10],
-    'min_samples_leaf': [1, 2, 4]
-}
-
-# Perform grid search
-grid_search = GridSearchCV(estimator=rf_model, param_grid=param_grid, cv=3, n_jobs=-1, verbose=2)
-grid_search.fit(X_train, Y_train)
-
-# Best parameters
-print("Best parameters found: ", grid_search.best_params_)
-
-# Train the best model
-best_model = grid_search.best_estimator_
-
-# Make predictions
-y_pred_best = best_model.predict(X_test)
-
-# Evaluate the tuned model
-print("Tuned Model Accuracy:", accuracy_score(Y_test, y_pred_best))
-print("Tuned Model Classification Report:\n", classification_report(Y_test, y_pred_best))
-print(data[['TotalScore', 'CyberAwarenessPercentage', 'AwarenessLevel']])
-
-# Save the model to a file call cyber_awareness_model.pkl
-#joblib.dump(rf_model, 'cyber_awareness_model.pkl')
-#joblib.dump(rf_model, 'ml_model.pkl')
 
 
 
@@ -323,50 +272,6 @@ print("\nClassification Report:\n", classification_report(Y_test, y_pred))
 # Save the best model for later use
 joblib.dump(best_model, 'decision_tree_best_model.pkl')
 print("Best model saved as 'decision_tree_best_model.pkl'")
-
-
-
-
-
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import precision_recall_fscore_support
-
-# Assuming your Random Forest model is trained and you have predictions
-# Y_test is the true labels, and Y_predict is the predicted labels
-# rf_model.classes_ gives the class labels
-
-# Calculate precision, recall, and F1-score for each class
-precision, recall, f1_score, _ = precision_recall_fscore_support(Y_test, Y_predict, labels=rf_model.classes_)
-
-# Class labels
-classes = rf_model.classes_
-
-# Create a bar plot
-x = np.arange(len(classes))
-width = 0.25
-
-plt.figure(figsize=(10, 6))
-
-# Plot precision, recall, and F1-score
-plt.bar(x - width, precision, width, label='Precision', color='skyblue')
-plt.bar(x, recall, width, label='Recall', color='lightgreen')
-plt.bar(x + width, f1_score, width, label='F1-Score', color='coral')
-
-# Add labels, title, and legend
-plt.xlabel('Cybersecurity Awareness Levels')
-plt.ylabel('Score')
-plt.title('Random Forest Metrics by Class')
-plt.xticks(x, classes)
-plt.legend()
-
-# Display the plot
-plt.tight_layout()
-plt.show()
-
-
 
 
 
@@ -413,34 +318,6 @@ plt.show()
 
 
 
-
-
-
-       #confusion matrics for random rorest
-
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics import confusion_matrix
-
-# Predict using the trained Random Forest model
-y_pred_rf = rf_model.predict(X_test)
-
-# Compute the confusion matrix
-cm = confusion_matrix(Y_test, y_pred_rf)
-
-# Define class labels (from your awareness levels)
-class_labels = ['Low Awareness', 'Medium Awareness', 'High Awareness']
-
-# Plot the confusion matrix
-plt.figure(figsize=(8, 6))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_labels, yticklabels=class_labels)
-
-# Add labels, title, and axis names
-plt.xlabel('Predicted Labels')
-plt.ylabel('True Labels')
-plt.title('Confusion Matrix for Random Forest Classifier')
-plt.show()
 
 
 
